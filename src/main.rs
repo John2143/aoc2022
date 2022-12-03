@@ -1,3 +1,4 @@
+#![feature(iter_array_chunks)]
 mod code;
 pub mod shared;
 
