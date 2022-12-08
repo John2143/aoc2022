@@ -7,7 +7,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::shared::{self, read_number};
+use crate::shared::{self, read_number, read_number_10};
 use itertools::Itertools;
 use nom::{
     branch::alt,
@@ -43,7 +43,6 @@ fn try_command_input(input: &str) -> IResult<&str, Line> {
         "cd" => {
             let (input, _) = tag(" ")(input)?;
             let (input, dir) = take_till(|_| false)(input)?;
-            dbg!(input, dir);
             let cmd = if dir == ".." {
                 Command::CDUp
             } else {
@@ -90,10 +89,6 @@ fn dirent() {
     );
 }
 
-fn read_number_parser<const BASE: u32>(input: &str) -> IResult<&str, usize> {
-    read_number(input, BASE)
-}
-
 fn filename(c: char) -> bool {
     match c {
         'a'..='z' => true,
@@ -104,9 +99,9 @@ fn filename(c: char) -> bool {
 }
 
 fn try_file(input: &str) -> IResult<&str, Line> {
-    let (input, size) = read_number_parser::<10>(input)?;
-    let (input, _) = tag(" ")(input)?;
-    let (input, fname) = take_while(filename)(input)?;
+    let (input, (size, fname)) =
+        separated_pair(read_number_10, tag(" "), take_while(filename))(input)?;
+
     Ok((input, Line::File(fname.into(), size)))
 }
 
@@ -143,16 +138,22 @@ impl Inode {
         }
     }
 
-    fn size(&self) -> usize {
+    fn size(&self, running_total: &mut impl FnMut(&OsString, usize) -> ()) -> usize {
         let folder = match self {
             Inode::Folder(f) => f,
             Inode::File(size) => return *size,
         };
 
         let mut size = 0;
-        for (_, inode) in folder {
-            size += inode.size();
+        for (folder_name, inode) in folder {
+            let dir_size = inode.size(running_total);
+            match inode {
+                Inode::Folder(_) => running_total(folder_name, dir_size),
+                Inode::File(_) => {}
+            }
+            size += dir_size;
         }
+        //running_total(&OsString::from("tesT"), size);
         size
     }
 }
@@ -194,21 +195,35 @@ fn generate_fs() -> Inode {
 
     root
 }
-
 pub fn a() {
     let ans = generate_fs();
     let mut total = 0;
     for (name, inode) in ans.as_folder() {
-        let size = inode.size();
+        let size = inode.size(&mut |_, size| {
+            if size < 100000 {
+                total += size
+            }
+        });
         println!("Inode {name:?} has size {size}");
-        if size < 100000 {
-            total += size;
-        }
     }
     println!("Part 1: {total}");
 }
 pub fn b() {
-    let _d = read_data();
-    let ans = "todo";
-    println!("Part 2: {ans}");
+    let ans = generate_fs();
+    let mut list = Vec::new();
+    let total_size = ans.size(&mut |i, size| {
+        list.push((i.to_owned(), size));
+    });
+    list.sort_by_key(|x| x.1);
+
+    let disk_size = 70000000;
+    let disk_req = 30000000;
+    let current_disk_free = disk_size - total_size;
+
+    for (name, size) in list {
+        if current_disk_free + size >= disk_req {
+            println!("Part 2: {size}");
+            break;
+        }
+    }
 }
