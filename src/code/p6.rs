@@ -26,7 +26,7 @@ fn find_first_start<const WINDOW_SIZE: usize>(s: &str) -> usize {
 fn test() {
     assert_eq!(find_first_start::<4>("asdf_0000"), 4);
     assert_eq!(find_first_start::<4>("asadf_0000"), 5);
-    assert_eq!(find_first_start::<4>("asasasfasd_0000"), 11);
+    assert_eq!(find_first_start::<4>("asasasfasd_0000"), 10);
 }
 
 pub fn a() {

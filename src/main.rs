@@ -1,5 +1,7 @@
 #![feature(iter_array_chunks)]
 #![feature(byte_slice_trim_ascii)]
+#![feature(array_windows)]
+#![feature(never_type)]
 mod code;
 pub mod shared;
 

@@ -3,10 +3,17 @@
 use crate::shared;
 use itertools::Itertools;
 
-pub fn read_data() -> impl Iterator<Item = i32> {
-    include_str!("../data/p16.txt");
-    std::iter::once(0)
+fn read_data() -> impl Iterator<Item = &'static str> {
+    include_str!("../data/p16.txt").lines()
 }
 
-pub fn a() {}
-pub fn b() {}
+pub fn a() {
+    let _d = read_data();
+    let ans = "todo";
+    println!("Part 1: {ans}");
+}
+pub fn b() {
+    let _d = read_data();
+    let ans = "todo";
+    println!("Part 2: {ans}");
+}
